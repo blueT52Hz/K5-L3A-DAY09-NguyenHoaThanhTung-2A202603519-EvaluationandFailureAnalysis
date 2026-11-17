@@ -69,8 +69,33 @@ def paired_bootstrap(a: Sequence[float], b: Sequence[float], *, n_resamples: int
     """a[i], b[i] = per-item mean over seeds, SAME items, SAME order.
     Return (mean(a)-mean(b), lo, hi) with scipy.stats.bootstrap(paired=True, method="percentile",
     rng=numpy.random.default_rng(rng)). If a == b everywhere return (0.0, 0.0, 0.0)."""
-    # TODO M4
-    raise NotImplementedError
+    import numpy as np
+    from scipy import stats as sps
+
+    x, y = np.asarray(a, dtype=float), np.asarray(b, dtype=float)
+    if x.shape != y.shape or x.ndim != 1:
+        raise ValueError(f"paired_bootstrap needs two 1-D sequences of equal length, got {x.shape} vs {y.shape}")
+    if x.size == 0:
+        raise ValueError("paired_bootstrap needs at least one item")
+    if np.array_equal(x, y):
+        return (0.0, 0.0, 0.0)
+    diff = x - y
+    d = float(diff.mean())
+    if np.all(diff == diff[0]):
+        # Every resample has the same mean: scipy reports a degenerate (NaN) interval, the true CI is the point.
+        return (d, d, d)
+
+    def mean_diff(u, v, axis=-1):
+        return np.mean(u - v, axis=axis)
+
+    kwargs = dict(paired=True, vectorized=True, n_resamples=n_resamples,
+                  confidence_level=confidence, method="percentile")
+    try:   # scipy >= 1.15 takes `rng`; older releases only `random_state`
+        res = sps.bootstrap((x, y), mean_diff, rng=np.random.default_rng(rng), **kwargs)
+    except TypeError:
+        res = sps.bootstrap((x, y), mean_diff, random_state=np.random.default_rng(rng), **kwargs)
+    ci = res.confidence_interval
+    return (d, float(ci.low), float(ci.high))
 
 
 def pass_at_k(n: int, c: int, k: int) -> float:
