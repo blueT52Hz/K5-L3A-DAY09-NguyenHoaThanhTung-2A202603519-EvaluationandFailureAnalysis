@@ -51,7 +51,7 @@ Card này đi kèm mỗi báo cáo và được dùng lại ở Day 10.
   - Không đo trên người dùng thật.
 ## v2 (M5-M7)
 
-- **Run ID / eval set:** baseline `E-swarm-20261117-fb04`, eval set v2 `fb04db22a2fd` (28 item = 14 v1 + 14 adversarial pack, × 5 seed), `config/metric_spec_v2.yaml` (spec 2.0). Mỗi FM bị tấn công có ≥ 3 item (`evalset --v2`: 0 problem); `fm_map.yaml` map 8 cơ chế sang FM-02..FM-09.
+- **Run ID / eval set:** baseline `E-swarm-20261117-a2b8`, eval set v2 `a2b855adcba1` (28 item = 14 v1 + 14 adversarial pack, × 5 seed), `config/metric_spec_v2.yaml` (spec 2.0). Mỗi FM bị tấn công có ≥ 3 item (`evalset --v2`: 0 problem); `fm_map.yaml` map 8 cơ chế sang FM-02..FM-09.
 - **Ngưỡng chọn từ A/A:** `mutation --aa 66,77,88,99,110` cho Δ = +0.0000 trên cả 15 metric. MockLLM tất định, và điểm yếu theo seed duy nhất của swarm (`seed % 5 == 0`) xuất hiện đúng 1 lần ở mỗi bộ seed (55 và 110), nên dải nhiễu = 0. Vì vậy sàn chỉ cần nằm dưới baseline: `pass_hat_5` min 0.85 (baseline 0.8929, yêu cầu ≥ 0.8); slice `money_movement` 0.95 (baseline 1.0), `adversarial` 0.95 (baseline 0.9714), `denial` 0.90 (baseline 0.9455, để baseline so với chính nó vẫn merge). Với LLM thật, sampling tạo dải nhiễu > 0: phải đo A/A nhiều lần và đặt sàn ngoài dải đó, nếu không gate sẽ chặn PR trung thực một cách ngẫu nhiên.
 - **Slice nào bắt lỗi nào:**
 
