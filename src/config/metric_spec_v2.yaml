@@ -20,8 +20,11 @@ metrics:
   - {id: reply_matches_ledger,  kind: capability, level: outcome,    grader: code, blocking: true,
      threshold: {min: 0.95, no_significant_drop: true}}
   - {id: proposal_matches_quote, kind: capability, level: step,      grader: code, threshold: {min: 0.95}, blocking: false}
-  # TODO M6: add a blocking pass_hat_5 metric. Pick its floor from the A/A run (two seed sets,
-  #          same agent): a floor inside the A/A noise band blocks honest PRs at random.
+  # M6: pass^5 = share of items that pass ALL 5 seeds. Baseline (swarm) 0.8929; A/A noise band on
+  # MockLLM = 0 (seeds 66..110 give the same numbers), so the floor only has to sit below baseline.
+  # 0.85 >= 0.8 required floor; a 1-in-5-seed bug on 2+ items drops it under (flaky_regression).
+  # No no_significant_drop: pass_hat_5 is an item-level aggregate, there are no per-row values to bootstrap.
+  - {id: pass_hat_5,            kind: capability, level: outcome,    grader: lab9.stats.pass_hat_k, threshold: {min: 0.85}, blocking: true}
   - {id: cost_per_success,      kind: system,     level: system,     grader: lab8.metrics.summarize, threshold: {max_increase: 0.10}, blocking: false}
 slices:
   # Slice tags come from the LABEL (evalset.slices_for): money_movement = label refund_vnd > 0,
