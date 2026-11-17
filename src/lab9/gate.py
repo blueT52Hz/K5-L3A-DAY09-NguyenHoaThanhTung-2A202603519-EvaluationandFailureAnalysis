@@ -32,9 +32,11 @@ def integrity_check(pr: dict, base: dict, spec: dict, base_spec: dict | None = N
         not become non-blocking, a metric may not disappear; the same for spec["slices"],
         including dropping no_significant_drop)
       - an item's slice tags in PR rows differ from the baseline's (relabelling an item out of a
-        slice hides its regression from the slice gate)"""
-    # TODO M7
-    return []
+        slice hides its regression from the slice gate)
+    Also: duplicated (item, seed) rows, non-boolean grader cells, and aggregates that disagree
+    with their own rows (hand-edited metrics). Implementation: lab9/gate_integrity_checks.py."""
+    from lab9.gate_integrity_checks import run_all
+    return run_all(pr, base, spec, base_spec)
 
 
 def slice_check(pr: dict, base: dict, spec: dict) -> tuple[list[str], list[str]]:

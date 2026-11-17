@@ -59,7 +59,7 @@ Quy tắc: tiền và phê duyệt luôn chấm bằng code. Judge chỉ dùng c
 - [ ] MockLLM tất định nên A/A Δ = 0; chưa đo dải nhiễu của LLM thật để đặt ngưỡng.
 - [ ] 5 seed: bug chỉ xuất hiện ở 1/3 seed không phát hiện ổn định.
 - [ ] FM-01, FM-06, FM-07 chưa có variant trong CI (chỉ probe); FM-09 chưa quan sát ở v1.
-- [ ] Gate chưa có `integrity_check` (M7): report bị chỉnh tay hoặc thiếu dòng chưa bị từ chối.
+- [x] Gate có `integrity_check` (M7): từ chối report có NaN, thiếu/trùng dòng, chọn seed, grader crash, metric lệch rows, đổi thẻ slice, và spec bị nới (ratchet với `--base-spec`). Còn mở: integrity không chứng minh được nguồn gốc rows (CI phải tự chạy lại eval), và sha eval set không tính file nhãn.
 
 ## 7. Khi nào lên v1.2
 - Đổi eval set (thêm item từ trace case, adversarial pack v2) → tăng `eval_set_version`, chạy lại baseline.

@@ -49,4 +49,23 @@ Card này đi kèm mỗi báo cáo và được dùng lại ở Day 10.
   - Judge replay trên CSV đã công khai, chưa có tập held-out; nhãn người cũng có lỗi (H-081).
   - FM-01, FM-06, FM-07 chỉ quan sát qua probe trong bộ nhớ, chưa có variant trong CI; FM-09 chưa quan sát ở v1.
   - Không đo trên người dùng thật.
+## v2 (M5-M7)
+
+- **Run ID / eval set:** baseline `E-swarm-20261117-fb04`, eval set v2 `fb04db22a2fd` (28 item = 14 v1 + 14 adversarial pack, × 5 seed), `config/metric_spec_v2.yaml` (spec 2.0). Mỗi FM bị tấn công có ≥ 3 item (`evalset --v2`: 0 problem); `fm_map.yaml` map 8 cơ chế sang FM-02..FM-09.
+- **Ngưỡng chọn từ A/A:** `mutation --aa 66,77,88,99,110` cho Δ = +0.0000 trên cả 15 metric. MockLLM tất định, và điểm yếu theo seed duy nhất của swarm (`seed % 5 == 0`) xuất hiện đúng 1 lần ở mỗi bộ seed (55 và 110), nên dải nhiễu = 0. Vì vậy sàn chỉ cần nằm dưới baseline: `pass_hat_5` min 0.85 (baseline 0.8929, yêu cầu ≥ 0.8); slice `money_movement` 0.95 (baseline 1.0), `adversarial` 0.95 (baseline 0.9714), `denial` 0.90 (baseline 0.9455, để baseline so với chính nó vẫn merge). Với LLM thật, sampling tạo dải nhiễu > 0: phải đo A/A nhiều lần và đặt sàn ngoài dải đó, nếu không gate sẽ chặn PR trung thực một cách ngẫu nhiên.
+- **Slice nào bắt lỗi nào:**
+
+| Variant | pass_rate tổng (Δ, CI) | Bị chặn bởi | Vì sao |
+|---|---|---|---|
+| `slice_regression` | 0.9357 (-0.043, [-0.121, +0.029]) không chặn | `slice:money_movement` (0.85), `slice:adversarial` (0.9143) | Cộng điều khoản chỉ ở 3 item 2 khoản (E-014, E-105, E-106), seed lẻ; trung bình 28 item che mất |
+| `flaky_regression` | 0.9143 (-0.064, [-0.114, -0.014]) | `pass_hat_5` (0.5714), `pass_rate`, `slice:money_movement`, `slice:adversarial` | Làm tròn 35.000 → 30.000 chỉ ở seed 33; mỗi item fail 1 seed là pass^5 = 0 |
+| `seeded_regression` | 0.6429 | refund_amount_correct, pass_rate, reply_matches_ledger, pass_hat_5, 3 slice | Lỗi rõ ràng |
+| `fixed`, `honest_refactor` | 1.0 | không (merge) | honest_refactor chỉ có `cost_per_success` warn (non-blocking) |
+
+Scorecard `mutation`: 3/3 regression bị chặn, 0 báo nhầm (cả khi có `--base-spec`).
+
+- **Integrity (M7):** `integrity_check` từ chối report khi: metric NaN/inf; số dòng ≠ items × seeds (theo manifest của PR và baseline), dòng (item, seed) trùng, bộ seed khác baseline; tập (item, seed) khác baseline; `evaluator_failures` khác rỗng, ô None hoặc không phải bool ở metric được chấm; metric tổng không khớp với rows (sửa tay); thẻ slice của item đổi; ratchet so với `--base-spec` (ngưỡng nới, metric/slice bị bỏ, blocking thành non-blocking, bỏ `no_significant_drop`). 4 trap công khai đều exit 1 với `INTEGRITY`: `evaluator_errors_as_nan` (9 ô None), `dropped_failing_rows` (131/140 dòng), `cherry_picked_seeds` (seed [22, 44]), `loosened_spec` (ratchet: min hạ, `no_significant_drop` bị bỏ, slice bị xóa). Không có báo nhầm trên report trung thực.
+- **Trap có thể còn lọt:** report được sinh lại hoàn toàn từ một agent khác nhưng gắn `run_id` / `shape` giả (integrity không kiểm được nguồn gốc của rows; CI chặn trường hợp này bằng cách tự chạy lại eval thay vì tin report trong PR); sửa đồng thời rows và metrics một cách nhất quán (ví dụ đổi một ô False thành True rồi tính lại); thay đổi nhãn trong `labels_v2.json` (đổi eval set sẽ đổi sha nếu sửa item, nhưng sha chỉ tính trên file item, không tính file nhãn).
+- **Giới hạn cỡ mẫu:** với 5 seed, bug chỉ xuất hiện ở 1/3 số lần chạy (`rare` theo `seed % 3 == 0`) chỉ rơi vào 1 seed (33) trong bộ hiện tại, và có thể rơi vào 0 hoặc 2 seed ở bộ seed khác, nên không phát hiện ổn định. Đây là giới hạn của cỡ mẫu, không hạ ngưỡng để "bắt" nó. Ngoài ra, slice nhỏ (money_movement n = 12, adversarial n = 14) cho CI rộng: CI của slice_regression trên money_movement là [-0.300, +0.000], chỉ sàn mới chặn được.
+
 - **Khi nào tăng eval-set version:** khi thêm hoặc bỏ item (ví dụ item mới từ trace case, adversarial pack ở v2), đổi nhãn, hoặc cần nới ngưỡng. Cùng version thì ngưỡng chỉ được chặt hơn (ratchet); lên version mới phải chạy lại baseline và ghi lý do ở PRD.
